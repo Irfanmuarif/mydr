@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload to My Drive Pro</title>
+  <title>Upload to My Drive</title>
   <style>
     :root {
       --primary-color: #1a73e8; /* Google Blue */
@@ -323,7 +323,7 @@
   <script>
     // --- KONFIGURASI ---
     // Ganti sandi di sini
-    const CORRECT_PASSWORD = "budakkorporat"; 
+    const CORRECT_PASSWORD = "admin123"; 
     // Ganti URL Web App Google Script Anda di sini
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwesLwJBJRG2ZX67GlWru45Jv7A5KdqarzKr5QAvSLZ0586M2pvLeqimVEi4LUdsUw/exec";
 
@@ -343,7 +343,6 @@
         document.getElementById('pageTitle').innerText = "Upload ke Drive";
       } else {
         errorMsg.style.display = 'block';
-        // Efek getar sederhana pada input
         const passInput = document.getElementById('passwordInput');
         passInput.style.borderColor = "var(--error-color)";
         setTimeout(() => passInput.style.borderColor = "var(--border-color)", 500);
@@ -383,29 +382,25 @@
       if (input.files && input.files[0]) {
         const file = input.files[0];
         
-        // Tampilkan info file
         document.getElementById('fileName').textContent = file.name;
         document.getElementById('fileSize').textContent = formatBytes(file.size);
         document.getElementById('fileInfo').classList.add('show');
         
-        // Aktifkan tombol upload
         document.getElementById('uploadBtn').disabled = false;
         
-        // Reset status
         document.getElementById('uploadStatus').style.display = 'none';
         document.getElementById('progressContainer').classList.remove('active');
       }
     }
 
     function resetFile(e) {
-      e.stopPropagation(); // Mencegah trigger click pada upload-area
+      e.stopPropagation();
       document.getElementById('fileInput').value = "";
       document.getElementById('fileInfo').classList.remove('show');
       document.getElementById('uploadBtn').disabled = true;
       document.getElementById('progressContainer').classList.remove('active');
     }
 
-    // Format Ukuran File
     function formatBytes(bytes, decimals = 2) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -415,7 +410,7 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    // --- LOGIKA UPLOAD ---
+    // --- LOGIKA UPLOAD (SESUAIKAN DENGAN e.parameter GS) ---
     function startUpload() {
       const fileInput = document.getElementById('fileInput');
       const file = fileInput.files[0];
@@ -424,29 +419,35 @@
 
       if (!file) return;
 
-      // UI Updates
       uploadBtn.disabled = true;
       uploadBtn.innerText = "Membaca File...";
       statusMsg.style.display = 'none';
       document.getElementById('progressContainer').classList.add('active');
+      document.getElementById('progressBar').style.width = "0%";
+      document.getElementById('progressPercent').innerText = "0%";
 
       const reader = new FileReader();
 
       reader.onload = function(e) {
+        // Ambil data base64 saja (tanpa header data:image/...)
         const base64Data = e.target.result.split(',')[1];
         
         uploadBtn.innerText = "Mengupload...";
         
-        // Persiapan Data
-        const formData = new FormData();
-        formData.append("filename", file.name);
-        formData.append("mimetype", file.type);
-        formData.append("filedata", base64Data);
+        // 1. Siapkan parameter sesuai permintaan GS (e.parameter)
+        const params = {
+          filename: file.name,
+          mimetype: file.type,
+          filedata: base64Data
+        };
 
-        // Menggunakan XMLHttpRequest untuk Progress Bar (Fetch API tidak support upload progress native dengan mudah)
+        // 2. Ubah ke format URL Encoded (key=value&key2=value2)
+        // Ini agar e.parameter di GS terisi dengan benar
+        const urlEncodedData = new URLSearchParams(params).toString();
+
+        // 3. Gunakan XMLHttpRequest untuk Progress Bar
         const xhr = new XMLHttpRequest();
         
-        // Event Progress
         xhr.upload.onprogress = function(event) {
           if (event.lengthComputable) {
             const percentComplete = (event.loaded / event.total) * 100;
@@ -455,9 +456,17 @@
           }
         };
 
-        // Event Selesai
         xhr.onload = function() {
-          if (xhr.status === 200) {
+          // Parsing respon JSON dari GS
+          let response;
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch (err) {
+            response = { status: "error", message: "Respon server tidak valid." };
+          }
+
+          // Cek sesuai format return GS Anda: {status: "success"}
+          if (xhr.status === 200 && response.status === "success") {
             showStatus("Upload Berhasil!", "success");
             uploadBtn.innerText = "Selesai";
             setTimeout(() => {
@@ -465,22 +474,27 @@
                uploadBtn.innerText = "Upload File";
             }, 2000);
           } else {
-            showStatus("Gagal Upload: " + xhr.statusText, "error");
+            // Tampilkan pesan error dari GS jika ada
+            console.error(response);
+            showStatus("Gagal: " + (response.message || "Terjadi kesalahan"), "error");
             uploadBtn.disabled = false;
             uploadBtn.innerText = "Coba Lagi";
+            document.getElementById('progressContainer').classList.remove('active');
           }
         };
 
-        // Event Error
         xhr.onerror = function() {
           showStatus("Terjadi kesalahan jaringan.", "error");
           uploadBtn.disabled = false;
           uploadBtn.innerText = "Coba Lagi";
+          document.getElementById('progressContainer').classList.remove('active');
         };
 
-        // Kirim Request
+        // 4. KIRIM REQUEST
+        // Set Content-Type agar membaca sebagai form data biasa (bukan multipart)
         xhr.open("POST", SCRIPT_URL, true);
-        xhr.send(formData);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.send(urlEncodedData);
       };
 
       reader.readAsDataURL(file);
