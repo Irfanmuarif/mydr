@@ -1,35 +1,496 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Upload to My Drive</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload to My Drive Pro</title>
+  <style>
+    :root {
+      --primary-color: #1a73e8; /* Google Blue */
+      --primary-hover: #1557b0;
+      --bg-color: #f0f2f5;
+      --surface-color: #ffffff;
+      --text-color: #202124;
+      --text-secondary: #5f6368;
+      --border-color: #dadce0;
+      --error-color: #d93025;
+      --success-color: #1e8e3e;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    /* Container Utama */
+    .container {
+      background: var(--surface-color);
+      width: 100%;
+      max-width: 450px;
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .header svg {
+      width: 48px;
+      height: 48px;
+      fill: var(--primary-color);
+      margin-bottom: 10px;
+    }
+
+    .header h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    /* Input Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    input[type="password"], 
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      background-color: var(--border-color);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+
+    /* Screen States */
+    .screen {
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafafa;
+    }
+
+    .upload-area:hover, .upload-area.dragover {
+      border-color: var(--primary-color);
+      background: #e8f0fe;
+    }
+
+    .upload-icon {
+      width: 64px;
+      height: 64px;
+      fill: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .file-info {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-info.show {
+      display: flex;
+    }
+
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      fill: var(--primary-color);
+    }
+
+    .file-details {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary-color);
+      transition: width 0.1s linear;
+    }
+
+    /* Status Message */
+    .status-msg {
+      margin-top: 1rem;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      display: none;
+    }
+
+    .status-msg.error {
+      background-color: #fce8e6;
+      color: var(--error-color);
+      display: block;
+    }
+
+    .status-msg.success {
+      background-color: #e6f4ea;
+      color: var(--success-color);
+      display: block;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hidden Input */
+    #fileInput {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h2>Upload File ke Google Drive</h2>
-  <input type="file" id="fileInput">
-  <button onclick="uploadFile()">Upload</button>
+
+  <div class="container">
+    <!-- HEADER LOGO & TITLE -->
+    <div class="header">
+      <!-- Google Drive Icon -->
+      <svg viewBox="0 0 24 24"><path d="M12.01 1.485c-1.5 0-2.88.485-4.006 1.305L1.485 10.39c-.66.91-.66 2.14 0 3.05l6.519 8.6c1.126.82 2.506 1.305 4.006 1.305s2.88-.485 4.006-1.305l6.519-8.6c.66-.91.66-2.14 0-3.05l-6.519-8.6c-1.126-.82-2.506-1.305-4.006-1.305zm0 1.965c1.16 0 2.23.375 3.105 1.01l5.465 7.205c.55.76.55 1.78 0 2.54l-5.465 7.205c-.875.635-1.945 1.01-3.105 1.01s-2.23-.375-3.105-1.01L3.44 14.205c-.55-.76-.55-1.78 0-2.54l5.465-7.205c.875-.635 1.945-1.01 3.105-1.01z"/><path d="M7 7l5 10 5-10H7z" fill-opacity="0.5"/><path d="M12 17L7 7h10l-5 10z"/></svg>
+      <h2 id="pageTitle">Akses Aman</h2>
+    </div>
+
+    <!-- HALAMAN 1: PASSWORD -->
+    <div id="loginScreen" class="screen active">
+      <div class="form-group">
+        <label for="passwordInput">Masukkan Sandi Upload</label>
+        <input type="password" id="passwordInput" placeholder="Kata sandi..." onkeypress="handleEnter(event, verifyPassword)">
+      </div>
+      <button class="btn" onclick="verifyPassword()">Buka Form Upload</button>
+      <div id="loginMsg" class="status-msg error">Sandi salah!</div>
+    </div>
+
+    <!-- HALAMAN 2: UPLOAD -->
+    <div id="uploadScreen" class="screen">
+      <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <!-- Cloud Upload Icon -->
+        <svg class="upload-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+        <p>Klik atau Tarik File ke sini</p>
+        <p style="font-size: 0.8rem; color: #999; margin-top:5px;">Maksimal 50MB (Disarankan)</p>
+      </div>
+      
+      <input type="file" id="fileInput" onchange="handleFileSelect(this)">
+
+      <!-- Info File Terpilih -->
+      <div class="file-info" id="fileInfo">
+        <svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        <div class="file-details">
+          <div class="file-name" id="fileName">nama_file.pdf</div>
+          <div class="file-size" id="fileSize">0 KB</div>
+        </div>
+        <div style="cursor: pointer; color: #d93025;" onclick="resetFile(event)">✕</div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-label">
+          <span>Mengupload...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="status-msg" id="uploadStatus"></div>
+
+      <button class="btn" id="uploadBtn" style="margin-top: 1.5rem;" onclick="startUpload()" disabled>Upload File</button>
+    </div>
+  </div>
 
   <script>
-    async function uploadFile() {
-      const file = document.getElementById("fileInput").files[0];
+    // --- KONFIGURASI ---
+    // Ganti sandi di sini
+    const CORRECT_PASSWORD = "budakkorporat"; 
+    // Ganti URL Web App Google Script Anda di sini
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwesLwJBJRG2ZX67GlWru45Jv7A5KdqarzKr5QAvSLZ0586M2pvLeqimVEi4LUdsUw/exec";
+
+    // --- LOGIKA PASSWORD ---
+    function handleEnter(e, callback) {
+      if (e.key === 'Enter') callback();
+    }
+
+    function verifyPassword() {
+      const input = document.getElementById('passwordInput').value;
+      const errorMsg = document.getElementById('loginMsg');
+
+      if (input === CORRECT_PASSWORD) {
+        errorMsg.style.display = 'none';
+        document.getElementById('loginScreen').classList.remove('active');
+        document.getElementById('uploadScreen').classList.add('active');
+        document.getElementById('pageTitle').innerText = "Upload ke Drive";
+      } else {
+        errorMsg.style.display = 'block';
+        // Efek getar sederhana pada input
+        const passInput = document.getElementById('passwordInput');
+        passInput.style.borderColor = "var(--error-color)";
+        setTimeout(() => passInput.style.borderColor = "var(--border-color)", 500);
+      }
+    }
+
+    // --- LOGIKA FILE & DRAG-DROP ---
+    const dropZone = document.getElementById('dropZone');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      document.getElementById('fileInput').files = files;
+      handleFileSelect(document.getElementById('fileInput'));
+    }
+
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Tampilkan info file
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = formatBytes(file.size);
+        document.getElementById('fileInfo').classList.add('show');
+        
+        // Aktifkan tombol upload
+        document.getElementById('uploadBtn').disabled = false;
+        
+        // Reset status
+        document.getElementById('uploadStatus').style.display = 'none';
+        document.getElementById('progressContainer').classList.remove('active');
+      }
+    }
+
+    function resetFile(e) {
+      e.stopPropagation(); // Mencegah trigger click pada upload-area
+      document.getElementById('fileInput').value = "";
+      document.getElementById('fileInfo').classList.remove('show');
+      document.getElementById('uploadBtn').disabled = true;
+      document.getElementById('progressContainer').classList.remove('active');
+    }
+
+    // Format Ukuran File
+    function formatBytes(bytes, decimals = 2) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // --- LOGIKA UPLOAD ---
+    function startUpload() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const uploadBtn = document.getElementById('uploadBtn');
+      const statusMsg = document.getElementById('uploadStatus');
+
+      if (!file) return;
+
+      // UI Updates
+      uploadBtn.disabled = true;
+      uploadBtn.innerText = "Membaca File...";
+      statusMsg.style.display = 'none';
+      document.getElementById('progressContainer').classList.add('active');
+
       const reader = new FileReader();
 
-      reader.onload = async function() {
-        const base64Data = reader.result.split(',')[1];
-
+      reader.onload = function(e) {
+        const base64Data = e.target.result.split(',')[1];
+        
+        uploadBtn.innerText = "Mengupload...";
+        
+        // Persiapan Data
         const formData = new FormData();
         formData.append("filename", file.name);
         formData.append("mimetype", file.type);
         formData.append("filedata", base64Data);
 
-        await fetch("https://script.google.com/macros/s/AKfycbwesLwJBJRG2ZX67GlWru45Jv7A5KdqarzKr5QAvSLZ0586M2pvLeqimVEi4LUdsUw/exec", {
-          method: "POST",
-          body: formData
-        });
+        // Menggunakan XMLHttpRequest untuk Progress Bar (Fetch API tidak support upload progress native dengan mudah)
+        const xhr = new XMLHttpRequest();
+        
+        // Event Progress
+        xhr.upload.onprogress = function(event) {
+          if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            document.getElementById('progressBar').style.width = percentComplete + "%";
+            document.getElementById('progressPercent').innerText = Math.round(percentComplete) + "%";
+          }
+        };
 
-        alert("Upload selesai!");
+        // Event Selesai
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            showStatus("Upload Berhasil!", "success");
+            uploadBtn.innerText = "Selesai";
+            setTimeout(() => {
+               resetFile({stopPropagation:()=>{}}); 
+               uploadBtn.innerText = "Upload File";
+            }, 2000);
+          } else {
+            showStatus("Gagal Upload: " + xhr.statusText, "error");
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "Coba Lagi";
+          }
+        };
+
+        // Event Error
+        xhr.onerror = function() {
+          showStatus("Terjadi kesalahan jaringan.", "error");
+          uploadBtn.disabled = false;
+          uploadBtn.innerText = "Coba Lagi";
+        };
+
+        // Kirim Request
+        xhr.open("POST", SCRIPT_URL, true);
+        xhr.send(formData);
       };
 
       reader.readAsDataURL(file);
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('uploadStatus');
+      el.textContent = msg;
+      el.className = 'status-msg ' + type;
+      el.style.display = 'block';
     }
   </script>
 </body>
