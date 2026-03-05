@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload to My Drive</title>
+</head>
+<body>
+  <h2>Upload File ke Google Drive</h2>
+  <input type="file" id="fileInput">
+  <button onclick="uploadFile()">Upload</button>
+
+  <script>
+    async function uploadFile() {
+      const file = document.getElementById("fileInput").files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function() {
+        const base64Data = reader.result.split(',')[1];
+
+        const formData = new FormData();
+        formData.append("filename", file.name);
+        formData.append("mimetype", file.type);
+        formData.append("filedata", base64Data);
+
+        await fetch("https://script.google.com/macros/s/AKfycbyF-fXQKVVxcIJmBiF1OtyiVMjOYR6Do1bpkpcsjgKwalb_E8ljOPZAJSjNr0q2gxA/exec", {
+          method: "POST",
+          body: formData
+        });
+
+        alert("Upload selesai!");
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
