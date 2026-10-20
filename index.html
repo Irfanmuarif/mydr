@@ -600,7 +600,7 @@
   <script>
     // ====================== CONFIG ======================
     // GANTI URL INI DENGAN URL GOOGLE APPS SCRIPT WEB APP ANDA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxz2nhHv0YhdDPhdxHU5VIPuJjI3D68ItMw-QrdF4QJN8Gonl6A3T5cgxIDiPnM4nA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzCRrFc3nc76JtnUcGCGHLjSP0i9qPJkMQG-EoRFcWZ2yQ_QW5ZOD5Zz28cSuNhgFI/exec";
 
     // ====================== ELEMENTS ======================
     const dropZone = document.getElementById('dropZone');
@@ -886,6 +886,9 @@
     });
 
     // ====================== DOWNLOAD LOGIC ======================
+    // Variable untuk fake-progress timer (dihentikan saat response sampai)
+    let downloadFakeTimer = null;
+
     function downloadFile() {
       const code = downloadCode.value.trim();
       if (!code) {
@@ -894,47 +897,79 @@
         return;
       }
 
+      // Bersihkan timer lama kalau ada
+      if (downloadFakeTimer) { clearInterval(downloadFakeTimer); downloadFakeTimer = null; }
+
+      // Lock UI — code field juga dikunci supaya tidak bisa diedit di tengah proses
       downloadBtn.disabled = true;
       downloadBtn.textContent = "Memproses...";
+      downloadCode.disabled = true;
       downloadStatus.style.display = 'block';
-      downloadProgressBar.style.width = '20%';
+      downloadProgressBar.style.width = '8%';
       downloadProgressBar.style.backgroundColor = 'var(--primary-color)';
-      downloadStatusText.textContent = "Mencari file di server...";
-      downloadFileName.textContent = "Mencari...";
+      downloadStatusText.textContent = "Menghubungi server...";
+      downloadFileName.textContent = "Mohon tunggu...";
       downloadFileSize.textContent = "-";
+
+      // === Fake progress animation ===
+      // Progress bar jalan pelan-pelan ke 75% sambil nunggu response server.
+      // Tujuannya: delay terasa lebih singkat dan progress bar "hidup".
+      let fakePct = 8;
+      downloadFakeTimer = setInterval(() => {
+        if (fakePct < 75) {
+          // Makin lama makin lambat supaya tidak cepat nyentuh 75%
+          fakePct += (75 - fakePct) * 0.04 + 0.3;
+          if (fakePct > 75) fakePct = 75;
+          downloadProgressBar.style.width = fakePct.toFixed(1) + '%';
+        }
+      }, 250);
 
       // JSONP untuk membaca response tanpa CORS
       const url = `${SCRIPT_URL}?action=download&code=${encodeURIComponent(code)}`;
       jsonpRequest(url)
         .then(data => {
+          // Hentikan fake progress
+          if (downloadFakeTimer) { clearInterval(downloadFakeTimer); downloadFakeTimer = null; }
+
           if (data && data.status === 'success') {
-            downloadProgressBar.style.width = '80%';
-            downloadStatusText.textContent = "Menyiapkan download...";
+            // Langsung 90% lalu 100% tanpa delay buatan
+            downloadProgressBar.style.width = '90%';
+            downloadStatusText.textContent = "Menyiapkan file...";
             downloadFileName.textContent = data.fileName || 'file';
             downloadFileSize.textContent = data.fileCount > 1
               ? `${data.fileCount} files (ZIP)`
               : (data.fileSize ? formatBytes(data.fileSize) : '1 file');
 
-            // Trigger download via hidden anchor
+            // === Trigger download via HIDDEN IFRAME ===
+            // URL TIDAK muncul di address bar (tidak ada _blank),
+            // TIDAK ditampilkan sebagai anchor yang bisa di-klik / di-copy,
+            // dan langsung dibersihkan dari DOM setelah click.
+            const fileUrl = (data.downloadUrl || '') + `&confirm=${Date.now()}`;
+
+            // Pakai anchor dengan download attribute, TANPA target=_blank.
+            // Browser akan trigger download di tab yang sama tanpa navigate.
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = data.fileName || 'download';
+            a.rel = 'noreferrer noopener';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            // Hapus anchor + bersihkan href supaya URL tidak tersisa di DOM
             setTimeout(() => {
-              downloadProgressBar.style.width = '100%';
-              downloadStatusText.textContent = "Download dimulai!";
+              a.removeAttribute('href');
+              if (a.parentNode) a.parentNode.removeChild(a);
+            }, 800);
 
-              const a = document.createElement('a');
-              a.href = data.downloadUrl + `&confirm=${Date.now()}`;
-              a.download = data.fileName || 'download';
-              a.target = '_blank';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
+            // Progress ke 100% dan tampilkan "Selesai"
+            downloadProgressBar.style.width = '100%';
+            downloadStatusText.textContent = "Selesai — download sedang berjalan";
+            showToast(`Download "${data.fileName}" dimulai`, "success");
 
-              showToast(`Download "${data.fileName}" dimulai!`, "success");
-
-              setTimeout(() => {
-                downloadBtn.disabled = false;
-                downloadBtn.textContent = "Download File";
-              }, 2000);
-            }, 500);
+            // === Auto-reset UI 2.5 detik setelah download dipicu ===
+            setTimeout(() => {
+              resetDownloadUI(false);
+            }, 2500);
 
           } else {
             downloadProgressBar.style.backgroundColor = 'var(--error-color)';
@@ -943,20 +978,36 @@
             downloadFileName.textContent = "Tidak ditemukan";
             downloadFileSize.textContent = "-";
             showToast(data?.message || "Code tidak ditemukan", "error");
-            downloadBtn.disabled = false;
-            downloadBtn.textContent = "Download File";
+            setTimeout(() => resetDownloadUI(true), 3500);
           }
         })
         .catch(err => {
           console.error(err);
+          if (downloadFakeTimer) { clearInterval(downloadFakeTimer); downloadFakeTimer = null; }
           downloadProgressBar.style.backgroundColor = 'var(--error-color)';
           downloadProgressBar.style.width = '100%';
           downloadStatusText.textContent = "Error koneksi";
           downloadFileName.textContent = "Error";
           showToast("Terjadi kesalahan koneksi: " + (err.message || ''), "error");
-          downloadBtn.disabled = false;
-          downloadBtn.textContent = "Download File";
+          setTimeout(() => resetDownloadUI(true), 3500);
         });
+    }
+
+    // Reset UI tab download ke kondisi awal
+    // keepCode = true  → code tidak di-clear (untuk error case, user bisa retry)
+    // keepCode = false → code di-clear (untuk success case, biar tidak bisa di-recopy)
+    function resetDownloadUI(keepCode) {
+      downloadStatus.style.display = 'none';
+      downloadProgressBar.style.width = '0%';
+      downloadProgressBar.style.backgroundColor = 'var(--primary-color)';
+      downloadStatusText.textContent = "";
+      downloadFileName.textContent = "";
+      downloadFileSize.textContent = "";
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = "Download File";
+      downloadCode.disabled = false;
+      if (!keepCode) downloadCode.value = '';
+      else downloadCode.focus();
     }
 
     // JSONP helper: bypass CORS untuk GET request ke GAS
