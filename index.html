@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload File Professional</title>
+  <title>Upload & Download File</title>
   <style>
     /* Reset & Base Styles */
     :root {
@@ -41,7 +41,7 @@
     .upload-card {
       background: var(--card-bg);
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       padding: 40px;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -58,6 +58,113 @@
       font-weight: 600;
       color: var(--text-main);
       font-size: 24px;
+    }
+
+    /* Tabs Navigation */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: #e8eaed;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-secondary);
+    }
+
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--primary-color);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* With Code Toggle */
+    .code-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.3s ease;
+    }
+
+    .code-toggle:hover {
+      border-color: var(--primary-color);
+      background: rgba(66, 133, 244, 0.04);
+    }
+
+    .code-toggle input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
+
+    .code-toggle label {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .code-toggle .toggle-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* Code Input */
+    .code-input-wrapper {
+      margin-bottom: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .code-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .code-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
     }
 
     /* Drop Zone Area */
@@ -81,7 +188,7 @@
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      pointer-events: none; /* Let clicks pass through to container */
+      pointer-events: none;
     }
 
     /* Icons */
@@ -103,6 +210,13 @@
       line-height: 1.5;
     }
 
+    .drop-text-hint {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
     .browse-btn {
       color: var(--primary-color);
       font-weight: 600;
@@ -115,10 +229,80 @@
       display: none;
     }
 
-    /* File Info Preview */
+    /* File List (Multi-file) */
+    .file-list {
+      margin-top: 16px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .file-list-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 13px;
+      animation: fadeIn 0.3s ease;
+      gap: 10px;
+    }
+
+    .file-list-item .file-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-color);
+      color: #fff;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .file-list-item .file-name-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+    }
+
+    .file-list-item .file-size-text {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: #e8eaed;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .file-list-item .file-remove {
+      flex-shrink: 0;
+      color: var(--error-color);
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .file-list-item .file-remove:hover {
+      background: rgba(234, 67, 53, 0.1);
+    }
+
+    /* File Info / Progress */
     .file-info {
-      display: none; /* Hidden initially */
-      margin-top: 24px;
+      display: none;
+      margin-top: 20px;
       background: #f8f9fa;
       padding: 16px;
       border-radius: 8px;
@@ -132,6 +316,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
+      gap: 10px;
     }
 
     .file-name {
@@ -149,6 +334,7 @@
       background: #e8eaed;
       padding: 4px 8px;
       border-radius: 4px;
+      white-space: nowrap;
     }
 
     /* Progress Bar */
@@ -170,7 +356,6 @@
       position: relative;
     }
 
-    /* Striped animation for progress bar */
     .progress-bar::after {
       content: "";
       position: absolute;
@@ -202,7 +387,7 @@
 
     /* Upload Action Button */
     .upload-btn {
-      margin-top: 24px;
+      margin-top: 20px;
       width: 100%;
       padding: 14px;
       background-color: var(--primary-color);
@@ -215,11 +400,11 @@
       transition: background 0.3s ease, transform 0.1s ease;
     }
 
-    .upload-btn:hover {
+    .upload-btn:hover:not(:disabled) {
       background-color: var(--primary-hover);
     }
 
-    .upload-btn:active {
+    .upload-btn:active:not(:disabled) {
       transform: scale(0.98);
     }
 
@@ -227,6 +412,19 @@
       background-color: #cccccc;
       cursor: not-allowed;
       transform: none;
+    }
+
+    /* Download Info Box */
+    .download-info {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .download-info p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-bottom: 12px;
+      line-height: 1.5;
     }
 
     /* Animations */
@@ -255,6 +453,8 @@
       transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
       z-index: 1000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 90%;
+      text-align: center;
     }
 
     .toast.show {
@@ -265,49 +465,144 @@
     .toast.success { background-color: var(--success-color); }
     .toast.error { background-color: var(--error-color); }
 
+    /* Code Display (after upload) */
+    .code-display {
+      display: none;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, #e8f0fe, #f8f9fa);
+      border: 1.5px solid var(--primary-color);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .code-display .code-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .code-display .code-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      cursor: pointer;
+      user-select: all;
+    }
+
+    .code-display .code-copy-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
 
   <div class="upload-card">
-    <h2>Upload ke Google Drive</h2>
-    
-    <!-- Drag and Drop Zone -->
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput">
-      <div class="drop-zone-content">
-        <!-- Cloud Icon SVG -->
-        <svg class="icon-cloud" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-        </svg>
-        <div class="drop-text">
-          Seret & Lepas file di sini atau <br>
-          <span class="browse-btn">Jelajahi File</span>
+    <h2>Google Drive Manager</h2>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="upload">Upload</button>
+      <button class="tab-btn" data-tab="download">Download</button>
+    </div>
+
+    <!-- ============= UPLOAD TAB ============= -->
+    <div class="tab-content active" id="tab-upload">
+      <!-- With Code Toggle -->
+      <div class="code-toggle" id="codeToggleBox">
+        <input type="checkbox" id="withCodeToggle">
+        <label for="withCodeToggle">
+          With Code
+          <span class="toggle-hint">Kunci file dengan code untuk download di tab Download</span>
+        </label>
+      </div>
+
+      <!-- Code Input (shown when toggle on) -->
+      <div class="code-input-wrapper" id="codeInputWrapper" style="display:none;">
+        <input type="text" id="uploadCode" class="code-input" placeholder="Masukkan code/sandi bebas (cth: abc123)">
+      </div>
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple>
+        <div class="drop-zone-content">
+          <svg class="icon-cloud" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          </svg>
+          <div class="drop-text">
+            Seret & Lepas file di sini atau <br>
+            <span class="browse-btn">Jelajahi File</span>
+          </div>
+          <div class="drop-text-hint">Bisa pilih multiple file sekaligus</div>
         </div>
       </div>
+
+      <!-- File List -->
+      <div class="file-list" id="fileList"></div>
+
+      <!-- Progress Info -->
+      <div class="file-info" id="fileInfo">
+        <div class="file-details">
+          <span class="file-name" id="fileName">-</span>
+          <span class="file-size" id="fileSize">0 KB</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="status-text" id="statusText">Menunggu upload...</div>
+      </div>
+
+      <!-- Code Display (after successful upload with code) -->
+      <div class="code-display" id="codeDisplay">
+        <div class="code-label">Code Anda (klik untuk salin)</div>
+        <div class="code-value" id="codeDisplayValue">-</div>
+        <div class="code-copy-hint">Gunakan code ini di tab Download</div>
+      </div>
+
+      <button class="upload-btn" id="uploadBtn" disabled>Upload File</button>
     </div>
 
-    <!-- File Info & Progress Section -->
-    <div class="file-info" id="fileInfo">
-      <div class="file-details">
-        <span class="file-name" id="fileName">nama_file.pdf</span>
-        <span class="file-size" id="fileSize">0 KB</span>
+    <!-- ============= DOWNLOAD TAB ============= -->
+    <div class="tab-content" id="tab-download">
+      <div class="download-info">
+        <p>Masukkan code yang Anda dapatkan saat upload. File akan otomatis terunduh — jika folder berisi 1 file, format tetap sama; jika lebih dari 1, akan di-zip otomatis.</p>
       </div>
-      
-      <div class="progress-container">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="status-text" id="statusText">Menunggu upload...</div>
-    </div>
 
-    <button class="upload-btn" id="uploadBtn" onclick="uploadFile()" disabled>Upload File</button>
+      <div class="code-input-wrapper">
+        <input type="text" id="downloadCode" class="code-input" placeholder="Masukkan code download">
+      </div>
+
+      <!-- Download Progress -->
+      <div class="file-info" id="downloadStatus" style="display:none;">
+        <div class="file-details">
+          <span class="file-name" id="downloadFileName">-</span>
+          <span class="file-size" id="downloadFileSize">-</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="downloadProgressBar"></div>
+        </div>
+        <div class="status-text" id="downloadStatusText">Memproses...</div>
+      </div>
+
+      <button class="upload-btn" id="downloadBtn">Download File</button>
+    </div>
   </div>
 
-  <!-- Toast Notification Element -->
-  <div id="toast" class="toast">Pesan notifikasi</div>
+  <!-- Toast -->
+  <div id="toast" class="toast">Pesan</div>
 
   <script>
-    // --- VARIABLES ---
+    // ====================== CONFIG ======================
+    // GANTI URL INI DENGAN URL GOOGLE APPS SCRIPT WEB APP ANDA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxz2nhHv0YhdDPhdxHU5VIPuJjI3D68ItMw-QrdF4QJN8Gonl6A3T5cgxIDiPnM4nA/exec";
+
+    // ====================== ELEMENTS ======================
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const uploadBtn = document.getElementById('uploadBtn');
@@ -317,18 +612,43 @@
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
     const toast = document.getElementById('toast');
+    const fileList = document.getElementById('fileList');
+    const withCodeToggle = document.getElementById('withCodeToggle');
+    const codeInputWrapper = document.getElementById('codeInputWrapper');
+    const uploadCode = document.getElementById('uploadCode');
+    const codeDisplay = document.getElementById('codeDisplay');
+    const codeDisplayValue = document.getElementById('codeDisplayValue');
 
-    let selectedFile = null;
+    const downloadCode = document.getElementById('downloadCode');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadStatus = document.getElementById('downloadStatus');
+    const downloadFileName = document.getElementById('downloadFileName');
+    const downloadFileSize = document.getElementById('downloadFileSize');
+    const downloadProgressBar = document.getElementById('downloadProgressBar');
+    const downloadStatusText = document.getElementById('downloadStatusText');
 
-    // --- EVENT LISTENERS UNTUK DRAG & DROP ---
-    
-    // Klik area drop zone memicu input file
+    let selectedFiles = [];
+
+    // ====================== TAB SWITCHING ======================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ====================== WITH CODE TOGGLE ======================
+    withCodeToggle.addEventListener('change', () => {
+      codeInputWrapper.style.display = withCodeToggle.checked ? 'block' : 'none';
+      if (!withCodeToggle.checked) uploadCode.value = '';
+    });
+
+    // ====================== DROP ZONE ======================
     dropZone.addEventListener('click', () => fileInput.click());
-
-    // Handle file input change
     fileInput.addEventListener('change', handleFileSelect);
 
-    // Drag events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -338,7 +658,6 @@
       e.stopPropagation();
     }
 
-    // Highlight visual saat drag over
     ['dragenter', 'dragover'].forEach(eventName => {
       dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
     });
@@ -347,39 +666,78 @@
       dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
     });
 
-    // Handle Drop
     dropZone.addEventListener('drop', (e) => {
       const dt = e.dataTransfer;
       const files = dt.files;
-      if (files.length) {
-        fileInput.files = files; // Assign ke input agar sinkron
-        handleFileSelect();
-      }
+      if (files.length) addFiles(files);
     });
 
-    // --- FUNGSI UTILITAS ---
-
     function handleFileSelect() {
-      const file = fileInput.files[0];
-      if (!file) return;
+      if (fileInput.files.length) {
+        addFiles(fileInput.files);
+        fileInput.value = ''; // reset agar file yg sama bisa dipilih ulang
+      }
+    }
 
-      selectedFile = file;
-      
-      // Tampilkan info file
-      fileNameEl.textContent = file.name;
-      fileSizeEl.textContent = formatBytes(file.size);
-      
-      // Reset progress UI
-      fileInfo.style.display = 'block';
-      uploadBtn.disabled = false;
+    function addFiles(files) {
+      for (const file of files) {
+        selectedFiles.push(file);
+      }
+      renderFileList();
+      updateUploadButton();
+    }
+
+    function renderFileList() {
+      fileList.innerHTML = '';
+      let totalSize = 0;
+      selectedFiles.forEach((file, index) => {
+        totalSize += file.size;
+        const ext = (file.name.split('.').pop() || 'FILE').substring(0, 3).toUpperCase();
+        const item = document.createElement('div');
+        item.className = 'file-list-item';
+        item.innerHTML = `
+          <div class="file-icon">${escapeHtml(ext)}</div>
+          <span class="file-name-text" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+          <span class="file-size-text">${formatBytes(file.size)}</span>
+          <span class="file-remove" data-index="${index}" title="Hapus">&times;</span>
+        `;
+        fileList.appendChild(item);
+      });
+
+      fileList.querySelectorAll('.file-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.target.dataset.index, 10);
+          selectedFiles.splice(idx, 1);
+          renderFileList();
+          updateUploadButton();
+        });
+      });
+
+      if (selectedFiles.length > 0) {
+        fileInfo.style.display = 'block';
+        fileNameEl.textContent = selectedFiles.length === 1
+          ? selectedFiles[0].name
+          : `${selectedFiles.length} files dipilih`;
+        fileSizeEl.textContent = formatBytes(totalSize);
+        progressBar.style.width = '0%';
+        progressBar.style.backgroundColor = 'var(--primary-color)';
+        statusText.textContent = "Siap diupload";
+        codeDisplay.style.display = 'none';
+      } else {
+        fileInfo.style.display = 'none';
+      }
+    }
+
+    function updateUploadButton() {
+      uploadBtn.disabled = selectedFiles.length === 0;
       uploadBtn.textContent = "Upload File";
-      progressBar.style.width = '0%';
-      statusText.textContent = "Siap diupload";
-      
-      // Animasi kecil saat muncul
-      fileInfo.style.animation = 'none';
-      fileInfo.offsetHeight; /* trigger reflow */
-      fileInfo.style.animation = 'fadeIn 0.4s ease';
+    }
+
+    // ====================== UTILITIES ======================
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
     }
 
     function formatBytes(bytes, decimals = 2) {
@@ -391,108 +749,261 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    function showToast(message, type = 'success') {
+    function showToast(message, type = 'success', duration = 3000) {
       toast.textContent = message;
       toast.className = `toast show ${type}`;
-      setTimeout(() => {
-        toast.className = 'toast';
-      }, 3000);
+      setTimeout(() => { toast.className = 'toast'; }, duration);
     }
 
-    // --- LOGIC UTAMA UPLOAD (SESUAI REQUEST) ---
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result || '';
+          const base64 = String(result).split(',')[1] || '';
+          resolve(base64);
+        };
+        reader.onerror = () => reject(reader.error || new Error('Read error'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ====================== UPLOAD LOGIC ======================
     async function uploadFile() {
-      if (!selectedFile) {
-        showToast("Silakan pilih file terlebih dahulu!", "error");
+      if (selectedFiles.length === 0) {
+        showToast("Pilih file terlebih dahulu!", "error");
         return;
       }
 
-      // UI Update: Mulai upload
+      const withCode = withCodeToggle.checked;
+      const code = uploadCode.value.trim();
+
+      if (withCode && !code) {
+        showToast("Masukkan code terlebih dahulu!", "error");
+        uploadCode.focus();
+        return;
+      }
+
       uploadBtn.disabled = true;
       uploadBtn.textContent = "Mengupload...";
       statusText.textContent = "Membaca file...";
-      progressBar.style.width = '10%'; // Visual fake progress start
+      progressBar.style.width = '5%';
+      progressBar.style.backgroundColor = 'var(--primary-color)';
 
-      const reader = new FileReader();
+      try {
+        // 1) Baca semua file sebagai base64
+        const filesData = [];
+        let totalRead = 0;
+        const totalSize = selectedFiles.reduce((sum, f) => sum + f.size, 0) || 1;
 
-      reader.onloadstart = () => {
-        // Saat mulai membaca
-        progressBar.style.width = '30%';
-      };
-
-      reader.onprogress = (data) => {
-        if (data.lengthComputable) {
-          // Hitung persentase pembacaan file
-          const percent = Math.round((data.loaded / data.total) * 100);
-          // Kita mapping 0-100% pembacaan ke range 30-80% progress bar
-          // agar masih ada ruang untuk proses fetch network nanti
-          const visualPercent = 30 + (percent * 0.5); 
-          progressBar.style.width = `${visualPercent}%`;
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const base64 = await readFileAsBase64(file);
+          filesData.push({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            data: base64
+          });
+          totalRead += file.size;
+          const readPercent = Math.round((totalRead / totalSize) * 50);
+          progressBar.style.width = `${5 + readPercent}%`;
+          statusText.textContent = `Membaca file ${i + 1}/${selectedFiles.length}`;
         }
-      };
 
-      reader.onload = async function() {
-        // File selesai dibaca ke memori
+        // 2) Kirim ke server
         statusText.textContent = "Mengirim ke server...";
-        progressBar.style.width = '80%';
-
-        const base64Data = reader.result.split(',')[1];
+        progressBar.style.width = '60%';
 
         const formData = new FormData();
-        formData.append("filename", selectedFile.name);
-        formData.append("mimetype", selectedFile.type);
-        formData.append("filedata", base64Data);
+        formData.append("action", "upload");
+        formData.append("withCode", withCode ? "true" : "false");
+        formData.append("code", code);
+        formData.append("fileCount", String(selectedFiles.length));
 
-        try {
-          // GANTI URL INI DENGAN URL SCRIPT GOOGLE APPS ANDA
-          const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwesLwJBJRG2ZX67GlWru45Jv7A5KdqarzKr5QAvSLZ0586M2pvLeqimVEi4LUdsUw/exec"; 
+        filesData.forEach((fd, i) => {
+          formData.append(`fileName_${i}`, fd.name);
+          formData.append(`mimeType_${i}`, fd.mimeType);
+          formData.append(`fileData_${i}`, fd.data);
+        });
 
-          await fetch(SCRIPT_URL, {
-            method: "POST",
-            body: formData
-          });
+        // no-cors: GAS tidak mengirim CORS header, jadi fire-and-forget.
+        // Request tetap sampai ke server walau response tidak bisa dibaca.
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: formData,
+          mode: "no-cors"
+        });
 
-          // Sukses
-          progressBar.style.width = '100%';
-          statusText.textContent = "Upload selesai!";
-          showToast("Upload selesai!", "success");
-          uploadBtn.textContent = "Selesai";
+        progressBar.style.width = '100%';
+        statusText.textContent = "Upload selesai!";
+        showToast("Upload selesai!", "success");
 
-          // Opsional: Reset setelah beberapa detik
-          setTimeout(() => {
-            resetForm();
-          }, 3000);
-
-        } catch (error) {
-          console.error(error);
-          statusText.textContent = "Gagal upload.";
-          progressBar.style.backgroundColor = 'var(--error-color)';
-          showToast("Terjadi kesalahan saat upload.", "error");
-          uploadBtn.disabled = false;
-          uploadBtn.textContent = "Coba Lagi";
+        // Tampilkan code jika with code
+        if (withCode) {
+          codeDisplayValue.textContent = code;
+          codeDisplay.style.display = 'block';
+          codeDisplayValue.addEventListener('click', () => {
+            navigator.clipboard?.writeText(code);
+            showToast("Code disalin!", "success", 1500);
+          }, { once: true });
         }
-      };
 
-      reader.onerror = function() {
-        statusText.textContent = "Gagal membaca file.";
+        uploadBtn.textContent = "Selesai";
+
+        // Reset setelah beberapa detik
+        setTimeout(() => {
+          resetUploadForm();
+        }, 5000);
+
+      } catch (error) {
+        console.error(error);
+        statusText.textContent = "Gagal upload.";
         progressBar.style.backgroundColor = 'var(--error-color)';
+        showToast("Terjadi kesalahan saat upload: " + error.message, "error");
         uploadBtn.disabled = false;
-        showToast("Gagal membaca file.", "error");
-      };
-
-      // Mulai proses pembacaan
-      reader.readAsDataURL(selectedFile);
+        uploadBtn.textContent = "Coba Lagi";
+      }
     }
 
-    function resetForm() {
-      selectedFile = null;
+    function resetUploadForm() {
+      selectedFiles = [];
       fileInput.value = '';
+      fileList.innerHTML = '';
       fileInfo.style.display = 'none';
+      codeDisplay.style.display = 'none';
       uploadBtn.disabled = true;
       uploadBtn.textContent = "Upload File";
       progressBar.style.backgroundColor = 'var(--primary-color)';
       progressBar.style.width = '0%';
     }
 
+    uploadBtn.addEventListener('click', uploadFile);
+
+    // Enter key pada code input → langsung upload
+    uploadCode.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !uploadBtn.disabled) uploadFile();
+    });
+
+    // ====================== DOWNLOAD LOGIC ======================
+    function downloadFile() {
+      const code = downloadCode.value.trim();
+      if (!code) {
+        showToast("Masukkan code terlebih dahulu!", "error");
+        downloadCode.focus();
+        return;
+      }
+
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = "Memproses...";
+      downloadStatus.style.display = 'block';
+      downloadProgressBar.style.width = '20%';
+      downloadProgressBar.style.backgroundColor = 'var(--primary-color)';
+      downloadStatusText.textContent = "Mencari file di server...";
+      downloadFileName.textContent = "Mencari...";
+      downloadFileSize.textContent = "-";
+
+      // JSONP untuk membaca response tanpa CORS
+      const url = `${SCRIPT_URL}?action=download&code=${encodeURIComponent(code)}`;
+      jsonpRequest(url)
+        .then(data => {
+          if (data && data.status === 'success') {
+            downloadProgressBar.style.width = '80%';
+            downloadStatusText.textContent = "Menyiapkan download...";
+            downloadFileName.textContent = data.fileName || 'file';
+            downloadFileSize.textContent = data.fileCount > 1
+              ? `${data.fileCount} files (ZIP)`
+              : (data.fileSize ? formatBytes(data.fileSize) : '1 file');
+
+            // Trigger download via hidden anchor
+            setTimeout(() => {
+              downloadProgressBar.style.width = '100%';
+              downloadStatusText.textContent = "Download dimulai!";
+
+              const a = document.createElement('a');
+              a.href = data.downloadUrl + `&confirm=${Date.now()}`;
+              a.download = data.fileName || 'download';
+              a.target = '_blank';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              showToast(`Download "${data.fileName}" dimulai!`, "success");
+
+              setTimeout(() => {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = "Download File";
+              }, 2000);
+            }, 500);
+
+          } else {
+            downloadProgressBar.style.backgroundColor = 'var(--error-color)';
+            downloadProgressBar.style.width = '100%';
+            downloadStatusText.textContent = data?.message || "Gagal menemukan file";
+            downloadFileName.textContent = "Tidak ditemukan";
+            downloadFileSize.textContent = "-";
+            showToast(data?.message || "Code tidak ditemukan", "error");
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = "Download File";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          downloadProgressBar.style.backgroundColor = 'var(--error-color)';
+          downloadProgressBar.style.width = '100%';
+          downloadStatusText.textContent = "Error koneksi";
+          downloadFileName.textContent = "Error";
+          showToast("Terjadi kesalahan koneksi: " + (err.message || ''), "error");
+          downloadBtn.disabled = false;
+          downloadBtn.textContent = "Download File";
+        });
+    }
+
+    // JSONP helper: bypass CORS untuk GET request ke GAS
+    function jsonpRequest(url) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+        let resolved = false;
+
+        window[callbackName] = function(data) {
+          resolved = true;
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+
+        const script = document.createElement('script');
+        const sep = url.includes('?') ? '&' : '?';
+        script.src = url + sep + 'callback=' + callbackName;
+        script.async = true;
+
+        script.onerror = () => {
+          if (!resolved) {
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            reject(new Error('JSONP request failed'));
+          }
+        };
+
+        document.body.appendChild(script);
+
+        // Timeout 60 detik
+        setTimeout(() => {
+          if (!resolved && window[callbackName]) {
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            reject(new Error('Timeout'));
+          }
+        }, 60000);
+      });
+    }
+
+    downloadBtn.addEventListener('click', downloadFile);
+
+    // Enter key pada download code input → langsung download
+    downloadCode.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') downloadFile();
+    });
   </script>
 </body>
 </html>
